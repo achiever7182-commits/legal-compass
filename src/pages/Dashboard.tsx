@@ -34,7 +34,7 @@ export default function Dashboard() {
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Case Intelligence Dashboard</p>
             </div>
           </div>
-          <div className="flex items-center gap-6 text-xs text-muted-foreground">
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
             <div className="flex items-center gap-1.5">
               <FileText className="h-3.5 w-3.5" />
               <span className="tabular-nums font-medium">{cases.length}</span> cases
@@ -43,6 +43,13 @@ export default function Dashboard() {
               <TrendingUp className="h-3.5 w-3.5" />
               <span className="tabular-nums font-medium">{avgWin}%</span> avg win
             </div>
+            <Link
+              to="/agent"
+              className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-lg font-medium hover:bg-primary/90 transition-colors"
+            >
+              <Bot className="h-3.5 w-3.5" />
+              AI Agent
+            </Link>
           </div>
         </div>
       </header>
