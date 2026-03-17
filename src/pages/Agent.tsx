@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Scale, Send, Bot, User, MessageSquare, Search, FileEdit, Loader2, ArrowLeft, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
-import { fetchCases } from "@/lib/api";
+import { fetchCases, fetchCaseById } from "@/lib/api";
 import { streamAgent } from "@/lib/agent-stream";
 import type { Case } from "@/lib/api";
 
