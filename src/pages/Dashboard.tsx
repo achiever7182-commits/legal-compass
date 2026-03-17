@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { Scale, FileText, TrendingUp } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Scale, FileText, TrendingUp, Bot } from "lucide-react";
 import { fetchCases } from "@/lib/api";
 import PriorityColumn from "@/components/PriorityColumn";
 import FileUpload from "@/components/FileUpload";
