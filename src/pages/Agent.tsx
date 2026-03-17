@@ -38,12 +38,14 @@ const QUICK_PROMPTS: Record<Mode, string[]> = {
 
 export default function Agent() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<Mode>("chat");
+  const [searchParams] = useSearchParams();
+  const [mode, setMode] = useState<Mode>((searchParams.get("mode") as Mode) || "chat");
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
   const [showCasePicker, setShowCasePicker] = useState(false);
+  const [preloaded, setPreloaded] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -52,6 +54,21 @@ export default function Agent() {
     queryKey: ["cases"],
     queryFn: fetchCases,
   });
+
+  // Pre-load case from URL params
+  const preloadCaseId = searchParams.get("caseId");
+  const { data: preloadedCase } = useQuery({
+    queryKey: ["case", preloadCaseId],
+    queryFn: () => fetchCaseById(preloadCaseId!),
+    enabled: !!preloadCaseId && !preloaded,
+  });
+
+  useEffect(() => {
+    if (preloadedCase && !preloaded) {
+      setSelectedCase(preloadedCase);
+      setPreloaded(true);
+    }
+  }, [preloadedCase, preloaded]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
