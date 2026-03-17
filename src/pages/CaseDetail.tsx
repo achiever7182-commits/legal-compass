@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Scale, Shield, BookOpen, TrendingUp, Calendar, Trash2 } from "lucide-react";
+import { ArrowLeft, Scale, Shield, BookOpen, TrendingUp, Calendar, Trash2, Bot, FileEdit } from "lucide-react";
 import { motion } from "framer-motion";
 import { fetchCaseById, fetchEvidenceByCaseId, deleteCase } from "@/lib/api";
 import { toast } from "sonner";
@@ -84,10 +84,26 @@ export default function CaseDetail() {
             <ArrowLeft className="h-4 w-4" />
             Back to Dashboard
           </button>
-          <button onClick={handleDelete} className="flex items-center gap-1.5 text-xs text-destructive hover:text-destructive/80 transition-colors">
-            <Trash2 className="h-3.5 w-3.5" />
-            Delete
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate(`/agent?caseId=${id}&mode=draft`)}
+              className="flex items-center gap-1.5 text-xs bg-secondary text-secondary-foreground hover:bg-secondary/80 px-3 py-1.5 rounded-md transition-colors"
+            >
+              <FileEdit className="h-3.5 w-3.5" />
+              Write Case
+            </button>
+            <button
+              onClick={() => navigate(`/agent?caseId=${id}`)}
+              className="flex items-center gap-1.5 text-xs bg-primary text-primary-foreground hover:bg-primary/90 px-3 py-1.5 rounded-md transition-colors"
+            >
+              <Bot className="h-3.5 w-3.5" />
+              Ask AI
+            </button>
+            <button onClick={handleDelete} className="flex items-center gap-1.5 text-xs text-destructive hover:text-destructive/80 transition-colors">
+              <Trash2 className="h-3.5 w-3.5" />
+              Delete
+            </button>
+          </div>
         </div>
       </header>
 
