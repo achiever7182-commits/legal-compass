@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Dashboard from "./pages/Dashboard";
 import CaseDetail from "./pages/CaseDetail";
+import Agent from "./pages/Agent";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
