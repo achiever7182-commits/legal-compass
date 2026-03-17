@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Scale, Shield, BookOpen, TrendingUp, Calendar, Trash2 } from "lucide-react";
+import { ArrowLeft, Scale, Shield, BookOpen, TrendingUp, Calendar, Trash2, Bot, FileEdit } from "lucide-react";
 import { motion } from "framer-motion";
 import { fetchCaseById, fetchEvidenceByCaseId, deleteCase } from "@/lib/api";
 import { toast } from "sonner";
