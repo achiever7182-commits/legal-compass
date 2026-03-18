@@ -1,12 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Scale, FileText, TrendingUp, Bot } from "lucide-react";
+import { Scale, FileText, TrendingUp, Bot, LogOut } from "lucide-react";
 import { fetchCases } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 import PriorityColumn from "@/components/PriorityColumn";
 import FileUpload from "@/components/FileUpload";
 import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
 
 export default function Dashboard() {
+  const { signOut } = useAuth();
   const { data: cases = [], isLoading, refetch } = useQuery({
     queryKey: ["cases"],
     queryFn: fetchCases,
@@ -22,7 +25,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="border-b border-border bg-card">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -50,15 +52,16 @@ export default function Dashboard() {
               <Bot className="h-3.5 w-3.5" />
               AI Agent
             </Link>
+            <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground hover:text-foreground">
+              <LogOut className="h-3.5 w-3.5" />
+            </Button>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-6 py-6 space-y-6">
-        {/* Upload */}
         <FileUpload onAnalysisComplete={() => refetch()} />
 
-        {/* Stats strip */}
         {cases.length > 0 && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -81,7 +84,6 @@ export default function Dashboard() {
           </motion.div>
         )}
 
-        {/* Priority columns */}
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
