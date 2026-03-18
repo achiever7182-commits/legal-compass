@@ -18,6 +18,19 @@ serve(async (req) => {
       });
     }
 
+    // Extract user from auth header
+    const authHeader = req.headers.get("authorization");
+    let userId: string | null = null;
+    if (authHeader) {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+      const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: { user } } = await userClient.auth.getUser();
+      userId = user?.id ?? null;
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -136,12 +149,11 @@ ${truncatedText}`,
       analysis = JSON.parse(jsonMatch[0]);
     }
 
-    // Use fileName as fallback title
     if (!analysis.title && fileName) {
       analysis.title = fileName.replace(/\.[^/.]+$/, "");
     }
 
-    // Save to database
+    // Save to database using service role
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -157,13 +169,13 @@ ${truncatedText}`,
         win_probability: typeof analysis.win_probability === "number" ? analysis.win_probability : parseInt(analysis.win_probability) || 50,
         relevant_laws: analysis.relevant_laws || [],
         timeline: analysis.timeline || [],
+        user_id: userId,
       })
       .select()
       .single();
 
     if (caseError) throw caseError;
 
-    // Insert evidence
     if (analysis.key_evidence?.length > 0) {
       const evidenceRows = analysis.key_evidence.map((e: { description: string; strength: string }) => ({
         case_id: caseData.id,
