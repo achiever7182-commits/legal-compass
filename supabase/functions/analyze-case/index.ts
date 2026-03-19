@@ -18,40 +18,23 @@ serve(async (req) => {
       });
     }
 
-    // Extract user from auth header
-    const authHeader = req.headers.get("authorization");
-    let userId: string | null = null;
-    if (authHeader) {
-      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-      const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-      const userClient = createClient(supabaseUrl, supabaseAnonKey, {
-        global: { headers: { Authorization: authHeader } },
-      });
-      const { data: { user } } = await userClient.auth.getUser();
-      userId = user?.id ?? null;
-    }
-
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const GEMINI_API_KEY = Deno.env.get("gemini");
+    if (!GEMINI_API_KEY) throw new Error("Gemini API key is not configured");
 
     const truncatedText = text.slice(0, 15000);
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          {
-            role: "system",
-            content: "You are an AI legal assistant specializing in Indian law. Always return valid JSON only, no markdown.",
-          },
-          {
-            role: "user",
-            content: `Analyze the following legal case text and return a valid JSON object with this exact schema:
+    const aiResponse = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [
+                {
+                  text: `You are an AI legal assistant specializing in Indian law. Analyze the following legal case text and return ONLY a valid JSON object (no markdown, no code fences) with this exact schema:
 {
   "title": "Short descriptive title for the case",
   "summary": "2-3 sentence summary of the case",
@@ -66,84 +49,37 @@ serve(async (req) => {
 
 Case text:
 ${truncatedText}`,
-          },
-        ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "analyze_case",
-              description: "Return structured legal case analysis",
-              parameters: {
-                type: "object",
-                properties: {
-                  title: { type: "string" },
-                  summary: { type: "string" },
-                  case_type: { type: "string" },
-                  priority: { type: "string", enum: ["High", "Medium", "Low"] },
-                  key_evidence: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        description: { type: "string" },
-                        strength: { type: "string", enum: ["Strong", "Medium", "Weak"] },
-                      },
-                      required: ["description", "strength"],
-                    },
-                  },
-                  legal_strategy: { type: "string" },
-                  relevant_laws: { type: "array", items: { type: "string" } },
-                  win_probability: { type: "number" },
-                  timeline: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        date: { type: "string" },
-                        event: { type: "string" },
-                      },
-                      required: ["date", "event"],
-                    },
-                  },
                 },
-                required: ["title", "summary", "case_type", "priority", "key_evidence", "legal_strategy", "relevant_laws", "win_probability", "timeline"],
-                additionalProperties: false,
-              },
+              ],
             },
+          ],
+          generationConfig: {
+            responseMimeType: "application/json",
           },
-        ],
-        tool_choice: { type: "function", function: { name: "analyze_case" } },
-      }),
-    });
+        }),
+      }
+    );
 
     if (!aiResponse.ok) {
-      const status = aiResponse.status;
-      if (status === 429) {
+      const errText = await aiResponse.text();
+      console.error("Gemini API error:", aiResponse.status, errText);
+      if (aiResponse.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), {
           status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted. Please add credits." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const errText = await aiResponse.text();
-      console.error("AI gateway error:", status, errText);
-      throw new Error(`AI gateway error: ${status}`);
+      throw new Error(`Gemini API error: ${aiResponse.status}`);
     }
 
     const aiData = await aiResponse.json();
-    const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-    let analysis;
+    const content = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!content) throw new Error("No response from Gemini");
 
-    if (toolCall?.function?.arguments) {
-      analysis = JSON.parse(toolCall.function.arguments);
-    } else {
-      const content = aiData.choices?.[0]?.message?.content || "";
+    let analysis;
+    try {
+      analysis = JSON.parse(content);
+    } catch {
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error("Failed to parse AI response");
       analysis = JSON.parse(jsonMatch[0]);
@@ -169,7 +105,6 @@ ${truncatedText}`,
         win_probability: typeof analysis.win_probability === "number" ? analysis.win_probability : parseInt(analysis.win_probability) || 50,
         relevant_laws: analysis.relevant_laws || [],
         timeline: analysis.timeline || [],
-        user_id: userId,
       })
       .select()
       .single();

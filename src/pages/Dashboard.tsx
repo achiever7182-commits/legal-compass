@@ -1,15 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Scale, FileText, TrendingUp, Bot, LogOut } from "lucide-react";
+import { Scale, FileText, TrendingUp, Bot } from "lucide-react";
 import { fetchCases } from "@/lib/api";
-import { useAuth } from "@/contexts/AuthContext";
 import PriorityColumn from "@/components/PriorityColumn";
 import FileUpload from "@/components/FileUpload";
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
 
 export default function Dashboard() {
-  const { signOut } = useAuth();
   const { data: cases = [], isLoading, refetch } = useQuery({
     queryKey: ["cases"],
     queryFn: fetchCases,
@@ -52,9 +49,6 @@ export default function Dashboard() {
               <Bot className="h-3.5 w-3.5" />
               AI Agent
             </Link>
-            <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground hover:text-foreground">
-              <LogOut className="h-3.5 w-3.5" />
-            </Button>
           </div>
         </div>
       </header>
