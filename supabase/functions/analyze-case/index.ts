@@ -18,23 +18,25 @@ serve(async (req) => {
       });
     }
 
-    const GEMINI_API_KEY = Deno.env.get("gemini");
-    if (!GEMINI_API_KEY) throw new Error("Gemini API key is not configured");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const truncatedText = text.slice(0, 15000);
 
     const aiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      "https://ai.gateway.lovable.dev/v1/chat/completions",
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        },
         body: JSON.stringify({
-          contents: [
+          model: "google/gemini-2.5-flash",
+          messages: [
             {
               role: "user",
-              parts: [
-                {
-                  text: `You are an AI legal assistant specializing in Indian law. Analyze the following legal case text and return ONLY a valid JSON object (no markdown, no code fences) with this exact schema:
+              content: `You are an AI legal assistant specializing in Indian law. Analyze the following legal case text and return ONLY a valid JSON object (no markdown, no code fences) with this exact schema:
 {
   "title": "Short descriptive title for the case",
   "summary": "2-3 sentence summary of the case",
@@ -49,40 +51,85 @@ serve(async (req) => {
 
 Case text:
 ${truncatedText}`,
-                },
-              ],
             },
           ],
-          generationConfig: {
-            responseMimeType: "application/json",
-          },
+          tools: [
+            {
+              type: "function",
+              function: {
+                name: "analyze_case",
+                description: "Return structured case analysis",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    title: { type: "string" },
+                    summary: { type: "string" },
+                    case_type: { type: "string", enum: ["Civil", "Criminal", "Constitutional", "Family", "Corporate", "Labour", "Tax", "Other"] },
+                    priority: { type: "string", enum: ["High", "Medium", "Low"] },
+                    key_evidence: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          description: { type: "string" },
+                          strength: { type: "string", enum: ["Strong", "Medium", "Weak"] },
+                        },
+                        required: ["description", "strength"],
+                      },
+                    },
+                    legal_strategy: { type: "string" },
+                    relevant_laws: { type: "array", items: { type: "string" } },
+                    win_probability: { type: "number" },
+                    timeline: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          date: { type: "string" },
+                          event: { type: "string" },
+                        },
+                        required: ["date", "event"],
+                      },
+                    },
+                  },
+                  required: ["title", "summary", "case_type", "priority", "key_evidence", "legal_strategy", "relevant_laws", "win_probability", "timeline"],
+                },
+              },
+            },
+          ],
+          tool_choice: { type: "function", function: { name: "analyze_case" } },
         }),
       }
     );
 
     if (!aiResponse.ok) {
       const errText = await aiResponse.text();
-      console.error("Gemini API error:", aiResponse.status, errText);
+      console.error("AI gateway error:", aiResponse.status, errText);
       if (aiResponse.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), {
           status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      throw new Error(`Gemini API error: ${aiResponse.status}`);
+      if (aiResponse.status === 402) {
+        return new Response(JSON.stringify({ error: "AI credits exhausted. Please add funds in Settings." }), {
+          status: 402,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      throw new Error(`AI gateway error: ${aiResponse.status}`);
     }
 
     const aiData = await aiResponse.json();
-    const content = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!content) throw new Error("No response from Gemini");
-
+    
     let analysis;
-    try {
+    const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+    if (toolCall?.function?.arguments) {
+      analysis = JSON.parse(toolCall.function.arguments);
+    } else {
+      const content = aiData.choices?.[0]?.message?.content;
+      if (!content) throw new Error("No response from AI");
       analysis = JSON.parse(content);
-    } catch {
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error("Failed to parse AI response");
-      analysis = JSON.parse(jsonMatch[0]);
     }
 
     if (!analysis.title && fileName) {
