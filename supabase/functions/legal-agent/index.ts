@@ -8,14 +8,12 @@ const corsHeaders = {
 
 const SYSTEM_PROMPTS: Record<string, string> = {
   chat: `You are JusticeBridge AI — an expert legal assistant specializing in Indian law. You help lawyers analyze cases, understand legal precedents, and provide strategic advice. Be precise, cite relevant sections of Indian law when applicable, and maintain a professional tone. Use markdown formatting for clarity.`,
-  
   research: `You are JusticeBridge Research Agent — a legal research specialist for Indian law. When given a query:
 - Search for relevant Indian laws, sections, and acts
 - Cite specific legal precedents and landmark judgments
 - Provide analysis of how laws apply to the situation
 - Reference IPC, CrPC, CPC, Constitution of India, and other relevant statutes
 Format your response with clear headings, bullet points, and citations using markdown.`,
-  
   draft: `You are JusticeBridge Document Drafter — a legal document generation specialist for Indian courts. When asked to draft a document:
 - Use proper legal formatting and language appropriate for Indian courts
 - Include relevant sections and citations
@@ -37,8 +35,8 @@ serve(async (req) => {
       });
     }
 
-    const GEMINI_API_KEY = Deno.env.get("gemini");
-    if (!GEMINI_API_KEY) throw new Error("Gemini API key is not configured");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     // If a caseId is provided, fetch case context
     let caseContext = "";
@@ -58,7 +56,7 @@ Summary: ${caseData.summary}
 Legal Strategy: ${caseData.legal_strategy}
 Win Probability: ${caseData.win_probability}%
 Relevant Laws: ${JSON.stringify(caseData.relevant_laws)}
-Evidence: ${evidence?.map(e => `- ${e.description} (${e.strength})`).join("\n") || "None"}
+Evidence: ${evidence?.map((e: any) => `- ${e.description} (${e.strength})`).join("\n") || "None"}
 Timeline: ${JSON.stringify(caseData.timeline)}
 --- END CASE CONTEXT ---`;
       }
@@ -66,25 +64,22 @@ Timeline: ${JSON.stringify(caseData.timeline)}
 
     const systemPrompt = (SYSTEM_PROMPTS[mode] || SYSTEM_PROMPTS.chat) + caseContext;
 
-    // Convert messages to Gemini format
-    const geminiContents = [
-      { role: "user", parts: [{ text: systemPrompt }] },
-      { role: "model", parts: [{ text: "Understood. I'm ready to assist with Indian law queries." }] },
-    ];
-
-    for (const msg of messages) {
-      geminiContents.push({
-        role: msg.role === "assistant" ? "model" : "user",
-        parts: [{ text: msg.content }],
-      });
-    }
-
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?alt=sse&key=${GEMINI_API_KEY}`,
+      "https://ai.gateway.lovable.dev/v1/chat/completions",
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contents: geminiContents }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            { role: "system", content: systemPrompt },
+            ...messages,
+          ],
+          stream: true,
+        }),
       }
     );
 
@@ -95,63 +90,19 @@ Timeline: ${JSON.stringify(caseData.timeline)}
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      if (response.status === 402) {
+        return new Response(JSON.stringify({ error: "AI credits exhausted. Please add funds in Settings." }), {
+          status: 402,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       const errText = await response.text();
-      console.error("Gemini API error:", response.status, errText);
-      throw new Error(`Gemini API error: ${response.status}`);
+      console.error("AI gateway error:", response.status, errText);
+      throw new Error(`AI gateway error: ${response.status}`);
     }
 
-    // Transform Gemini SSE stream to OpenAI-compatible SSE stream
-    const { readable, writable } = new TransformStream();
-    const writer = writable.getWriter();
-    const encoder = new TextEncoder();
-
-    (async () => {
-      try {
-        const reader = response.body!.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-
-          let newlineIndex: number;
-          while ((newlineIndex = buffer.indexOf("\n")) !== -1) {
-            let line = buffer.slice(0, newlineIndex);
-            buffer = buffer.slice(newlineIndex + 1);
-
-            if (line.endsWith("\r")) line = line.slice(0, -1);
-            if (!line.startsWith("data: ")) continue;
-
-            const jsonStr = line.slice(6).trim();
-            if (!jsonStr) continue;
-
-            try {
-              const parsed = JSON.parse(jsonStr);
-              const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-              if (text) {
-                // Emit in OpenAI-compatible format
-                const chunk = JSON.stringify({
-                  choices: [{ delta: { content: text } }],
-                });
-                await writer.write(encoder.encode(`data: ${chunk}\n\n`));
-              }
-            } catch {
-              // ignore parse errors
-            }
-          }
-        }
-
-        await writer.write(encoder.encode("data: [DONE]\n\n"));
-      } catch (e) {
-        console.error("Stream transform error:", e);
-      } finally {
-        await writer.close();
-      }
-    })();
-
-    return new Response(readable, {
+    // The gateway already returns OpenAI-compatible SSE, so pass through directly
+    return new Response(response.body, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (e) {
