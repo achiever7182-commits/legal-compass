@@ -115,24 +115,15 @@ export default function Agent() {
       {mode === "voice" ? (
         <>
           <ChatMessages messages={messages} mode={mode} isStreaming={isStreaming} onSend={send} />
-          {messages.length === 0 && (
-            <VoicePanel
-              onTranscript={send}
-              lastAssistantMessage={lastAssistantMessage}
-              isStreaming={isStreaming}
-            />
-          )}
-          {messages.length > 0 && (
-            <div className="border-t border-border bg-card flex-shrink-0">
-              <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-center gap-4">
-                <VoicePanel
-                  onTranscript={send}
-                  lastAssistantMessage={lastAssistantMessage}
-                  isStreaming={isStreaming}
-                />
-              </div>
+          <div className="border-t border-border bg-card flex-shrink-0">
+            <div className="max-w-4xl mx-auto px-4 py-4">
+              <VoicePanel
+                onTranscript={send}
+                lastAssistantMessage={lastAssistantMessage}
+                isStreaming={isStreaming}
+              />
             </div>
-          )}
+          </div>
         </>
       ) : (
         <>
