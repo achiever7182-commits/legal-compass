@@ -5,3 +5,9 @@ verify_jwt = false
 
 [functions.legal-agent]
 verify_jwt = false
+
+[functions.elevenlabs-tts]
+verify_jwt = false
+
+[functions.elevenlabs-stt]
+verify_jwt = false
