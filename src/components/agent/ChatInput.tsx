@@ -22,16 +22,16 @@ export default function ChatInput({ input, mode, isStreaming, onInputChange, onS
   };
 
   const placeholder =
-    mode === "chat" ? "Ask a legal question…"
-    : mode === "research" ? "What should I research?"
-    : mode === "draft" ? "What document should I draft?"
-    : mode === "email" ? "Describe the legal notice to generate…"
-    : "Use the microphone to speak…";
+    mode === "chat" ? "Enter dispute details for triage..."
+    : mode === "research" ? "Describe the legal research query..."
+    : mode === "draft" ? "Specify the document to draft..."
+    : mode === "email" ? "Describe the legal notice to generate..."
+    : "Use the microphone for voice input...";
 
   return (
     <div className="border-t border-border bg-card flex-shrink-0">
-      <div className="max-w-4xl mx-auto px-4 py-3">
-        <div className="flex items-end gap-2 bg-background border border-border rounded-xl px-3 py-2 focus-within:border-primary transition-colors">
+      <div className="max-w-4xl mx-auto px-6 py-4">
+        <div className="flex items-end gap-3 bg-background border border-border rounded-xl px-4 py-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-ring/20 transition-all">
           <textarea
             ref={inputRef}
             value={input}
@@ -50,7 +50,7 @@ export default function ChatInput({ input, mode, isStreaming, onInputChange, onS
           {isStreaming ? (
             <button
               onClick={onStop}
-              className="w-8 h-8 rounded-lg bg-destructive flex items-center justify-center text-destructive-foreground hover:bg-destructive/90 transition-colors flex-shrink-0"
+              className="w-9 h-9 rounded-lg bg-destructive flex items-center justify-center text-destructive-foreground hover:bg-destructive/90 transition-colors flex-shrink-0"
             >
               <X className="h-4 w-4" />
             </button>
@@ -58,14 +58,14 @@ export default function ChatInput({ input, mode, isStreaming, onInputChange, onS
             <button
               onClick={onSend}
               disabled={!input.trim()}
-              className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+              className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
             >
               <Send className="h-4 w-4" />
             </button>
           )}
         </div>
-        <p className="text-[10px] text-muted-foreground text-center mt-2">
-          AI responses are for informational purposes only and do not constitute legal advice.
+        <p className="text-[11px] text-muted-foreground text-center mt-3">
+          This is an AI-generated legal analysis. Please verify with a qualified legal professional before taking action.
         </p>
       </div>
     </div>

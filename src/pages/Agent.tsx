@@ -6,6 +6,7 @@ import { fetchCases, fetchCaseById } from "@/lib/api";
 import { streamAgent } from "@/lib/agent-stream";
 import type { Case } from "@/lib/api";
 import type { Msg, Mode } from "@/components/agent/types";
+import Layout from "@/components/Layout";
 import AgentHeader from "@/components/agent/AgentHeader";
 import CasePicker from "@/components/agent/CasePicker";
 import ModeTabs from "@/components/agent/ModeTabs";
@@ -76,7 +77,7 @@ export default function Agent() {
     } catch (e: any) {
       if (e.name === "AbortError") return;
       console.error(e);
-      toast.error(e.message || "Agent failed");
+      toast.error(e.message || "Analysis engine failed");
       setIsStreaming(false);
     }
   }, [messages, mode, selectedCase, isStreaming]);
@@ -95,49 +96,51 @@ export default function Agent() {
   const lastAssistantMessage = [...messages].reverse().find((m) => m.role === "assistant")?.content || null;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <AgentHeader
-        mode={mode}
-        selectedCase={selectedCase}
-        onClearCase={() => setSelectedCase(null)}
-        onToggleCasePicker={() => setShowCasePicker(!showCasePicker)}
-      />
+    <Layout>
+      <div className="flex flex-col h-[calc(100vh-3.5rem)]">
+        <AgentHeader
+          mode={mode}
+          selectedCase={selectedCase}
+          onClearCase={() => setSelectedCase(null)}
+          onToggleCasePicker={() => setShowCasePicker(!showCasePicker)}
+        />
 
-      <CasePicker
-        show={showCasePicker}
-        cases={cases}
-        selectedCase={selectedCase}
-        onSelect={(c) => { setSelectedCase(c); setShowCasePicker(false); }}
-      />
+        <CasePicker
+          show={showCasePicker}
+          cases={cases}
+          selectedCase={selectedCase}
+          onSelect={(c) => { setSelectedCase(c); setShowCasePicker(false); }}
+        />
 
-      <ModeTabs mode={mode} onModeChange={handleModeChange} />
+        <ModeTabs mode={mode} onModeChange={handleModeChange} />
 
-      {mode === "voice" ? (
-        <>
-          <ChatMessages messages={messages} mode={mode} isStreaming={isStreaming} onSend={send} />
-          <div className="border-t border-border bg-card flex-shrink-0">
-            <div className="max-w-4xl mx-auto px-4 py-4">
-              <VoicePanel
-                onTranscript={send}
-                lastAssistantMessage={lastAssistantMessage}
-                isStreaming={isStreaming}
-              />
+        {mode === "voice" ? (
+          <>
+            <ChatMessages messages={messages} mode={mode} isStreaming={isStreaming} onSend={send} />
+            <div className="border-t border-border bg-card flex-shrink-0">
+              <div className="max-w-4xl mx-auto px-6 py-4">
+                <VoicePanel
+                  onTranscript={send}
+                  lastAssistantMessage={lastAssistantMessage}
+                  isStreaming={isStreaming}
+                />
+              </div>
             </div>
-          </div>
-        </>
-      ) : (
-        <>
-          <ChatMessages messages={messages} mode={mode} isStreaming={isStreaming} onSend={send} />
-          <ChatInput
-            input={input}
-            mode={mode}
-            isStreaming={isStreaming}
-            onInputChange={setInput}
-            onSend={() => send(input)}
-            onStop={handleStop}
-          />
-        </>
-      )}
-    </div>
+          </>
+        ) : (
+          <>
+            <ChatMessages messages={messages} mode={mode} isStreaming={isStreaming} onSend={send} />
+            <ChatInput
+              input={input}
+              mode={mode}
+              isStreaming={isStreaming}
+              onInputChange={setInput}
+              onSend={() => send(input)}
+              onStop={handleStop}
+            />
+          </>
+        )}
+      </div>
+    </Layout>
   );
 }
