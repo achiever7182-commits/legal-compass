@@ -16,6 +16,14 @@ export default {
       fontFamily: {
         sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
       },
+      fontSize: {
+        "heading-lg": ["28px", { lineHeight: "1.3", fontWeight: "600" }],
+        "heading": ["24px", { lineHeight: "1.3", fontWeight: "600" }],
+        "subheading": ["18px", { lineHeight: "1.4", fontWeight: "500" }],
+        "body": ["15px", { lineHeight: "1.6", fontWeight: "400" }],
+        "label": ["14px", { lineHeight: "1.4", fontWeight: "500" }],
+        "small": ["13px", { lineHeight: "1.4", fontWeight: "500" }],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -34,6 +42,15 @@ export default {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
         },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+        },
+        danger: "hsl(var(--danger))",
         muted: {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
@@ -50,6 +67,7 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        "priority-very-high": "hsl(var(--priority-very-high))",
         "priority-high": "hsl(var(--priority-high))",
         "priority-medium": "hsl(var(--priority-medium))",
         "priority-low": "hsl(var(--priority-low))",
