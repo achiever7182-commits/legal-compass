@@ -7,10 +7,18 @@ interface FileUploadProps {
   onAnalysisComplete: () => void;
 }
 
+const LOADING_MESSAGES = [
+  "Analyzing legal indicators...",
+  "Determining urgency level...",
+  "Computing priority score...",
+  "Extracting key evidence...",
+];
+
 export default function FileUpload({ onAnalysisComplete }: FileUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [currentFile, setCurrentFile] = useState<string | null>(null);
+  const [loadingMsg, setLoadingMsg] = useState(0);
 
   const processFile = useCallback(async (file: File) => {
     const ext = file.name.split(".").pop()?.toLowerCase();
@@ -21,13 +29,17 @@ export default function FileUpload({ onAnalysisComplete }: FileUploadProps) {
 
     setIsAnalyzing(true);
     setCurrentFile(file.name);
+    setLoadingMsg(0);
+
+    const interval = setInterval(() => {
+      setLoadingMsg((prev) => (prev + 1) % LOADING_MESSAGES.length);
+    }, 2000);
 
     try {
       let text = "";
       if (ext === "txt") {
         text = await file.text();
       } else {
-        // For PDF/DOCX, read as text (basic extraction)
         text = await file.text();
       }
 
@@ -43,6 +55,7 @@ export default function FileUpload({ onAnalysisComplete }: FileUploadProps) {
       console.error(err);
       toast.error(err instanceof Error ? err.message : "Analysis failed");
     } finally {
+      clearInterval(interval);
       setIsAnalyzing(false);
       setCurrentFile(null);
     }
@@ -71,22 +84,24 @@ export default function FileUpload({ onAnalysisComplete }: FileUploadProps) {
       }`}
     >
       {isAnalyzing ? (
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
             <div className="h-full bg-primary shimmer rounded-full" style={{ width: "100%" }} />
           </div>
           <Loader2 className="h-6 w-6 text-primary animate-spin" />
-          <p className="text-sm text-foreground font-medium">Analyzing {currentFile}…</p>
-          <p className="text-xs text-muted-foreground">AI is extracting evidence, strategy, and priority</p>
+          <div>
+            <p className="text-sm font-medium text-foreground">{LOADING_MESSAGES[loadingMsg]}</p>
+            <p className="text-small text-muted-foreground mt-1">Processing: {currentFile}</p>
+          </div>
         </div>
       ) : (
         <label className="cursor-pointer flex flex-col items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+          <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
             <Upload className="h-5 w-5 text-muted-foreground" />
           </div>
           <div>
-            <p className="text-sm font-medium text-foreground">Drop case files here</p>
-            <p className="text-xs text-muted-foreground mt-1">PDF, DOCX, or TXT — up to 15,000 characters</p>
+            <p className="text-sm font-medium text-foreground">Drop dispute documents here</p>
+            <p className="text-small text-muted-foreground mt-1">PDF, DOCX, or TXT — detailed description of dispute</p>
           </div>
           <input
             type="file"

@@ -16,6 +16,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/queue" element={<Dashboard />} />
           <Route path="/case/:id" element={<CaseDetail />} />
           <Route path="/agent" element={<Agent />} />
           <Route path="*" element={<NotFound />} />

@@ -1,38 +1,38 @@
-import { MessageSquare, Search, FileEdit, Mail, Mic } from "lucide-react";
+import { Scale, Search, FileEdit, Mail, Mic } from "lucide-react";
 
 export type Msg = { role: "user" | "assistant"; content: string };
 export type Mode = "chat" | "research" | "draft" | "email" | "voice";
 
-export const MODE_CONFIG: Record<Mode, { label: string; icon: typeof MessageSquare; description: string }> = {
-  chat: { label: "Legal Chat", icon: MessageSquare, description: "Ask questions about Indian law" },
-  research: { label: "Research", icon: Search, description: "Find laws, precedents & judgments" },
-  draft: { label: "Draft", icon: FileEdit, description: "Generate legal documents" },
-  email: { label: "Notice", icon: Mail, description: "Generate legal notice emails" },
-  voice: { label: "Voice", icon: Mic, description: "Voice-based legal assistant" },
+export const MODE_CONFIG: Record<Mode, { label: string; icon: typeof Scale; description: string }> = {
+  chat: { label: "Case Analysis", icon: Scale, description: "Enter dispute details for triage and legal analysis" },
+  research: { label: "Legal Research", icon: Search, description: "Search laws, precedents, and judicial opinions" },
+  draft: { label: "Document Drafting", icon: FileEdit, description: "Generate court-ready legal documents" },
+  email: { label: "Legal Notice", icon: Mail, description: "Generate structured legal notice communications" },
+  voice: { label: "Voice Input", icon: Mic, description: "Voice-based case analysis interface" },
 };
 
 export const QUICK_PROMPTS: Record<Mode, string[]> = {
   chat: [
-    "What are the grounds for bail under BNSS?",
+    "Analyze grounds for bail under BNSS provisions",
     "Explain Section 103 of BNS (formerly 498A IPC)",
-    "What is anticipatory bail under BNSS?",
+    "Determine jurisdiction for cross-state dispute",
   ],
   research: [
-    "Find precedents for landlord-tenant disputes in India",
-    "Research consumer protection laws for defective products",
-    "Find landmark Supreme Court cases on right to privacy",
+    "Find precedents for landlord-tenant disputes under Transfer of Property Act",
+    "Research consumer protection framework for defective products",
+    "Identify landmark Supreme Court rulings on right to privacy",
   ],
   draft: [
-    "Draft a legal notice for breach of contract",
-    "Draft a bail application under BNSS",
-    "Draft a petition for consumer complaint",
+    "Draft legal notice for breach of contract under Indian Contract Act",
+    "Draft bail application under BNSS provisions",
+    "Draft petition for consumer complaint under CPA 2019",
   ],
   email: [
-    "Send legal notice for unpaid rent of 3 months",
-    "Send notice for breach of employment contract",
-    "Send consumer complaint notice for defective product",
+    "Generate legal notice for 3 months unpaid commercial rent",
+    "Generate notice for breach of employment contract terms",
+    "Generate consumer complaint notice for defective product",
   ],
   voice: [
-    "Click the microphone to start speaking",
+    "Activate microphone for voice-based case input",
   ],
 };
